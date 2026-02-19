@@ -313,12 +313,12 @@ func renderExternalIDEURL(
 ) (string, error) {
 	tmpl, err := template.New("gitspace_external_url").Option("missingkey=error").Parse(externalURLTemplate)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse external URL template: %w", err)
+		return "", fmt.Errorf("failed to parse GITNESS_GITSPACE_EXTERNAL_URL_TEMPLATE: %w", err)
 	}
 
 	var buffer bytes.Buffer
 	if err = tmpl.Execute(&buffer, templateData); err != nil {
-		return "", fmt.Errorf("failed to execute external URL template: %w", err)
+		return "", fmt.Errorf("failed to render GITNESS_GITSPACE_EXTERNAL_URL_TEMPLATE: %w", err)
 	}
 
 	ideURL, err := url.Parse(strings.TrimSpace(buffer.String()))
