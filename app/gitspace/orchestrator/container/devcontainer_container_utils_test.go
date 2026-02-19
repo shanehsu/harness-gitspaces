@@ -47,3 +47,18 @@ func TestGetAdditionalDockerNetworksAllFiltered(t *testing.T) {
 	networks := getAdditionalDockerNetworks(dockertypes.NetworkMode("primary"), devcontainerConfig)
 	require.Empty(t, networks)
 }
+
+func TestGetAdditionalDockerNetworksEmptyArray(t *testing.T) {
+	t.Parallel()
+
+	devcontainerConfig := types.DevcontainerConfig{
+		Customizations: types.DevContainerConfigCustomizations{
+			"shanehsu": map[string]any{
+				"dockerNetworks": []string{},
+			},
+		},
+	}
+
+	networks := getAdditionalDockerNetworks(dockertypes.NetworkMode("primary"), devcontainerConfig)
+	require.Nil(t, networks)
+}
