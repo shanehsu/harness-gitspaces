@@ -5,7 +5,6 @@ import (
 
 	"github.com/harness/gitness/types"
 
-	dockertypes "github.com/docker/docker/api/types/container"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,8 +19,8 @@ func TestGetAdditionalDockerNetworks(t *testing.T) {
 		},
 	}
 
-	networks := getAdditionalDockerNetworks(dockertypes.NetworkMode("primary"), devcontainerConfig)
-	require.Equal(t, []string{"traefik", "shared"}, networks)
+	networks := getAdditionalDockerNetworks(devcontainerConfig)
+	require.Equal(t, []string{" traefik ", "", "traefik", "primary", "shared"}, networks)
 }
 
 func TestGetAdditionalDockerNetworksNoCustomization(t *testing.T) {
@@ -29,23 +28,8 @@ func TestGetAdditionalDockerNetworksNoCustomization(t *testing.T) {
 
 	devcontainerConfig := types.DevcontainerConfig{}
 
-	networks := getAdditionalDockerNetworks(dockertypes.NetworkMode("primary"), devcontainerConfig)
-	require.Nil(t, networks)
-}
-
-func TestGetAdditionalDockerNetworksAllFiltered(t *testing.T) {
-	t.Parallel()
-
-	devcontainerConfig := types.DevcontainerConfig{
-		Customizations: types.DevContainerConfigCustomizations{
-			"shanehsu": map[string]any{
-				"dockerNetworks": []string{"", " ", "primary", "primary"},
-			},
-		},
-	}
-
-	networks := getAdditionalDockerNetworks(dockertypes.NetworkMode("primary"), devcontainerConfig)
-	require.Nil(t, networks)
+	networks := getAdditionalDockerNetworks(devcontainerConfig)
+	require.Empty(t, networks)
 }
 
 func TestGetAdditionalDockerNetworksEmptyArray(t *testing.T) {
@@ -59,6 +43,6 @@ func TestGetAdditionalDockerNetworksEmptyArray(t *testing.T) {
 		},
 	}
 
-	networks := getAdditionalDockerNetworks(dockertypes.NetworkMode("primary"), devcontainerConfig)
-	require.Nil(t, networks)
+	networks := getAdditionalDockerNetworks(devcontainerConfig)
+	require.Empty(t, networks)
 }

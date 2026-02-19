@@ -210,7 +210,7 @@ func CreateContainer(
 		return nil, logStreamWrapError(gitspaceLogger, "Error while creating container", err)
 	}
 
-	for _, network := range getAdditionalDockerNetworks(hostConfig.NetworkMode, devcontainerConfig) {
+	for _, network := range getAdditionalDockerNetworks(devcontainerConfig) {
 		if err = dockerClient.NetworkConnect(ctx, network, createResponse.ID, nil); err != nil {
 			return nil, logStreamWrapError(
 				gitspaceLogger,
@@ -223,32 +223,8 @@ func CreateContainer(
 	return lifecycleHookSteps, nil
 }
 
-func getAdditionalDockerNetworks(networkMode container.NetworkMode, devcontainerConfig types.DevcontainerConfig) []string {
-	networks := devcontainerConfig.Customizations.ExtractShanehsuDockerNetworks()
-	if len(networks) == 0 {
-		return nil
-	}
-
-	networkModeValue := string(networkMode)
-	seenNetworks := make(map[string]struct{}, len(networks))
-	filteredNetworks := make([]string, 0, len(networks))
-	for _, network := range networks {
-		network = strings.TrimSpace(network)
-		if network == "" || network == networkModeValue {
-			continue
-		}
-		if _, exists := seenNetworks[network]; exists {
-			continue
-		}
-		seenNetworks[network] = struct{}{}
-		filteredNetworks = append(filteredNetworks, network)
-	}
-
-	if len(filteredNetworks) == 0 {
-		return nil
-	}
-
-	return filteredNetworks
+func getAdditionalDockerNetworks(devcontainerConfig types.DevcontainerConfig) []string {
+	return devcontainerConfig.Customizations.ExtractShanehsuDockerNetworks()
 }
 
 func mergeLifeCycleHooks(
