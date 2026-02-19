@@ -182,10 +182,13 @@ func (dcc DevContainerConfigCustomizations) ExtractShanehsuDockerNetworks() []st
 		return nil
 	}
 
-	rawData, _ := json.Marshal(&val)
+	rawData, err := json.Marshal(&val)
+	if err != nil {
+		return nil
+	}
 
 	var shanehsuSpecs ShanehsuCustomizationSpecs
-	if err := json.Unmarshal(rawData, &shanehsuSpecs); err != nil {
+	if err = json.Unmarshal(rawData, &shanehsuSpecs); err != nil {
 		return nil
 	}
 

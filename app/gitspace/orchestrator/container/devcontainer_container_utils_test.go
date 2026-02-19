@@ -23,3 +23,27 @@ func TestGetAdditionalDockerNetworks(t *testing.T) {
 	networks := getAdditionalDockerNetworks(dockertypes.NetworkMode("primary"), devcontainerConfig)
 	require.Equal(t, []string{"traefik", "shared"}, networks)
 }
+
+func TestGetAdditionalDockerNetworksNoCustomization(t *testing.T) {
+	t.Parallel()
+
+	devcontainerConfig := types.DevcontainerConfig{}
+
+	networks := getAdditionalDockerNetworks(dockertypes.NetworkMode("primary"), devcontainerConfig)
+	require.Nil(t, networks)
+}
+
+func TestGetAdditionalDockerNetworksAllFiltered(t *testing.T) {
+	t.Parallel()
+
+	devcontainerConfig := types.DevcontainerConfig{
+		Customizations: types.DevContainerConfigCustomizations{
+			"shanehsu": map[string]any{
+				"dockerNetworks": []string{"", " ", "primary", "primary"},
+			},
+		},
+	}
+
+	networks := getAdditionalDockerNetworks(dockertypes.NetworkMode("primary"), devcontainerConfig)
+	require.Empty(t, networks)
+}
