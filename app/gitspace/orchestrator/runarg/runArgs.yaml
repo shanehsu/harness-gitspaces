@@ -491,7 +491,7 @@
     ^host$: true
     ^none$: true
   allowed_values: { }
-  allow_multiple_occurrences: true
+  allow_multiple_occurrences: false
 
 - name: --network-alias
   short_hand:

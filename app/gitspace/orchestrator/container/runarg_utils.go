@@ -156,22 +156,7 @@ func getHostResources(runArgsMap map[types.RunArg]*types.RunArgValue) (container
 }
 
 func getNetworkMode(runArgsMap map[types.RunArg]*types.RunArgValue) container.NetworkMode {
-	networks := getNetworks(runArgsMap)
-	if len(networks) == 0 {
-		return ""
-	}
-	return container.NetworkMode(networks[0])
-}
-
-func getNetworks(runArgsMap map[types.RunArg]*types.RunArgValue) []string {
-	networks := getArgValueStringSlice(runArgsMap, types.RunArgNetwork)
-	filteredNetworks := make([]string, 0, len(networks))
-	for _, network := range networks {
-		if network != "" {
-			filteredNetworks = append(filteredNetworks, network)
-		}
-	}
-	return filteredNetworks
+	return container.NetworkMode(getArgValueString(runArgsMap, types.RunArgNetwork))
 }
 
 func getCapAdd(runArgsMap map[types.RunArg]*types.RunArgValue) strslice.StrSlice {

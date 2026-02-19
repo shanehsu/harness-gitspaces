@@ -24,6 +24,7 @@ import (
 
 const (
 	GitspaceCustomizationsKey  CustomizationsKey = "harnessGitspaces"
+	ShanehsuCustomizationsKey  CustomizationsKey = "shanehsu"
 	VSCodeCustomizationsKey    CustomizationsKey = "vscode"
 	JetBrainsCustomizationsKey CustomizationsKey = "jetbrains"
 )
@@ -89,6 +90,10 @@ type GitspaceCustomizationSpecs struct {
 		Auth      string `json:"auth"`
 		SecretRef string `json:"secret_ref"`
 	} `json:"ai_agent,omitempty"`
+}
+
+type ShanehsuCustomizationSpecs struct {
+	DockerNetworks []string `json:"dockerNetworks,omitempty"`
 }
 
 type JetBrainsBackend string
@@ -169,6 +174,22 @@ func (dcc DevContainerConfigCustomizations) ExtractGitspaceSpec() *GitspaceCusto
 		return nil
 	}
 	return &gitspaceSpecs
+}
+
+func (dcc DevContainerConfigCustomizations) ExtractShanehsuDockerNetworks() []string {
+	val, ok := dcc[ShanehsuCustomizationsKey.String()]
+	if !ok {
+		return nil
+	}
+
+	rawData, _ := json.Marshal(&val)
+
+	var shanehsuSpecs ShanehsuCustomizationSpecs
+	if err := json.Unmarshal(rawData, &shanehsuSpecs); err != nil {
+		return nil
+	}
+
+	return shanehsuSpecs.DockerNetworks
 }
 
 func (dcc DevContainerConfigCustomizations) ExtractVSCodeSpec() *VSCodeCustomizationSpecs {
