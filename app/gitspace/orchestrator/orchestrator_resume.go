@@ -15,11 +15,16 @@
 package orchestrator
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"net/url"
 	"strconv"
+	"strings"
+	"text/template"
 	"time"
 
+	"github.com/harness/gitness/app/gitspace/orchestrator/container"
 	"github.com/harness/gitness/app/gitspace/orchestrator/container/response"
 	"github.com/harness/gitness/app/gitspace/orchestrator/ide"
 	"github.com/harness/gitness/app/gitspace/orchestrator/utils"
@@ -209,6 +214,19 @@ func (o Orchestrator) FinishResumeStartGitspace(
 	devcontainerUserName := o.getUserName(provisionedInfra, startResponse)
 
 	ideURLString := ideSvc.GenerateURL(startResponse.AbsoluteRepoPath, ideHost, idePort, devcontainerUserName)
+	if o.config.ExternalURLTemplate != "" {
+		renderedURL, renderErr := renderExternalIDEURL(
+			o.config.ExternalURLTemplate,
+			buildExternalIDEURLTemplateData(gitspaceConfig, provisionedInfra, startResponse),
+			ideSvc.Type(),
+			startResponse.AbsoluteRepoPath,
+		)
+		if renderErr != nil {
+			log.Ctx(ctx).Warn().Err(renderErr).Msg("failed to render gitspace external URL template")
+		} else {
+			ideURLString = renderedURL
+		}
+	}
 	gitspaceInstance.URL = &ideURLString
 
 	sshCommand := generateSSHCommand(startResponse.AbsoluteRepoPath, ideHost, idePort, devcontainerUserName)
@@ -239,6 +257,82 @@ func (o Orchestrator) FinishResumeStartGitspace(
 
 	o.emitGitspaceEvent(ctx, gitspaceConfig, enum.GitspaceEventTypeGitspaceActionStartCompleted)
 	return *gitspaceInstance, nil
+}
+
+type externalIDEURLTemplateData struct {
+	ContainerName              string
+	GitspaceIdentifier         string
+	GitspaceInstanceIdentifier string
+	GitspaceConfigID           int64
+	GitspaceInstanceID         int64
+	GitspaceUserIdentifier     string
+	InfraProviderResourceUID   string
+	InfraProviderResourceName  string
+	InfraProviderResourceType  string
+	SpacePath                  string
+	GitspacePath               string
+}
+
+func buildExternalIDEURLTemplateData(
+	gitspaceConfig types.GitspaceConfig,
+	provisionedInfra types.Infrastructure,
+	startResponse *response.StartResponse,
+) externalIDEURLTemplateData {
+	containerName := startResponse.ContainerName
+	if containerName == "" {
+		containerName = container.GetGitspaceContainerName(gitspaceConfig)
+	}
+
+	return externalIDEURLTemplateData{
+		ContainerName:              containerName,
+		GitspaceIdentifier:         gitspaceConfig.Identifier,
+		GitspaceInstanceIdentifier: provisionedInfra.GitspaceInstanceIdentifier,
+		GitspaceConfigID:           gitspaceConfig.ID,
+		GitspaceInstanceID:         getGitspaceInstanceID(gitspaceConfig.GitspaceInstance),
+		GitspaceUserIdentifier:     gitspaceConfig.GitspaceUser.Identifier,
+		InfraProviderResourceUID:   gitspaceConfig.InfraProviderResource.UID,
+		InfraProviderResourceName:  gitspaceConfig.InfraProviderResource.Name,
+		InfraProviderResourceType:  string(gitspaceConfig.InfraProviderResource.InfraProviderType),
+		SpacePath:                  gitspaceConfig.SpacePath,
+		GitspacePath:               startResponse.AbsoluteRepoPath,
+	}
+}
+
+func getGitspaceInstanceID(instance *types.GitspaceInstance) int64 {
+	if instance == nil {
+		return 0
+	}
+	return instance.ID
+}
+
+func renderExternalIDEURL(
+	externalURLTemplate string,
+	templateData externalIDEURLTemplateData,
+	ideType enum.IDEType,
+	absoluteRepoPath string,
+) (string, error) {
+	tmpl, err := template.New("gitspace_external_url").Option("missingkey=error").Parse(externalURLTemplate)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse GITNESS_GITSPACE_EXTERNAL_URL_TEMPLATE: %w", err)
+	}
+
+	var buffer bytes.Buffer
+	if err = tmpl.Execute(&buffer, templateData); err != nil {
+		return "", fmt.Errorf("failed to render GITNESS_GITSPACE_EXTERNAL_URL_TEMPLATE: %w", err)
+	}
+
+	ideURL, err := url.Parse(strings.TrimSpace(buffer.String()))
+	if err != nil {
+		return "", fmt.Errorf("failed to parse rendered external URL: %w", err)
+	}
+
+	if ideType == enum.IDETypeVSCodeWeb {
+		queryValues := ideURL.Query()
+		queryValues.Set("folder", strings.TrimPrefix(absoluteRepoPath, "/"))
+		ideURL.RawQuery = queryValues.Encode()
+	}
+
+	return ideURL.String(), nil
 }
 
 // getIDEPort returns the port used to connect to the IDE.

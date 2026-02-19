@@ -205,12 +205,26 @@ func CreateContainer(
 		User:         containerUser,
 	}
 
-	_, err = dockerClient.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, containerName)
+	createResponse, err := dockerClient.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, containerName)
 	if err != nil {
 		return nil, logStreamWrapError(gitspaceLogger, "Error while creating container", err)
 	}
 
+	for _, network := range getAdditionalDockerNetworks(devcontainerConfig) {
+		if err = dockerClient.NetworkConnect(ctx, network, createResponse.ID, nil); err != nil {
+			return nil, logStreamWrapError(
+				gitspaceLogger,
+				fmt.Sprintf("Error while connecting container to network %s", network),
+				err,
+			)
+		}
+	}
+
 	return lifecycleHookSteps, nil
+}
+
+func getAdditionalDockerNetworks(devcontainerConfig types.DevcontainerConfig) []string {
+	return devcontainerConfig.Customizations.ExtractShanehsuDockerNetworks()
 }
 
 func mergeLifeCycleHooks(
