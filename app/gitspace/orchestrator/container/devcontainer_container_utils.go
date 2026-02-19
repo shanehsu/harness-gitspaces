@@ -244,6 +244,10 @@ func getAdditionalDockerNetworks(networkMode container.NetworkMode, devcontainer
 		filteredNetworks = append(filteredNetworks, network)
 	}
 
+	if len(filteredNetworks) == 0 {
+		return nil
+	}
+
 	return filteredNetworks
 }
 

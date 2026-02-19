@@ -45,7 +45,7 @@ func TestGetAdditionalDockerNetworksAllFiltered(t *testing.T) {
 	}
 
 	networks := getAdditionalDockerNetworks(dockertypes.NetworkMode("primary"), devcontainerConfig)
-	require.Empty(t, networks)
+	require.Nil(t, networks)
 }
 
 func TestGetAdditionalDockerNetworksEmptyArray(t *testing.T) {

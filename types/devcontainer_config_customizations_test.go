@@ -25,3 +25,15 @@ func TestExtractShanehsuDockerNetworksMissingCustomization(t *testing.T) {
 
 	require.Nil(t, customizations.ExtractShanehsuDockerNetworks())
 }
+
+func TestExtractShanehsuDockerNetworksInvalidType(t *testing.T) {
+	t.Parallel()
+
+	customizations := DevContainerConfigCustomizations{
+		"shanehsu": map[string]any{
+			"dockerNetworks": "traefik",
+		},
+	}
+
+	require.Nil(t, customizations.ExtractShanehsuDockerNetworks())
+}
