@@ -485,7 +485,8 @@ func ProvideIDEJetBrainsConfig(config *types.Config) *ide.JetBrainsIDEConfig {
 // ProvideGitspaceOrchestratorConfig loads the Gitspace orchestrator config from the main config.
 func ProvideGitspaceOrchestratorConfig(config *types.Config) *orchestrator.Config {
 	return &orchestrator.Config{
-		DefaultBaseImage: config.Gitspace.DefaultBaseImage,
+		DefaultBaseImage:    config.Gitspace.DefaultBaseImage,
+		ExternalURLTemplate: config.Gitspace.ExternalURLTemplate,
 	}
 }
 

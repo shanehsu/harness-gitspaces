@@ -42,7 +42,8 @@ import (
 const harnessUser = "harness"
 
 type Config struct {
-	DefaultBaseImage string
+	DefaultBaseImage    string
+	ExternalURLTemplate string
 }
 
 type Orchestrator struct {

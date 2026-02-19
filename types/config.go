@@ -489,6 +489,8 @@ type Config struct {
 		// DefaultBaseImage is used to create the Gitspace when no devcontainer.json is absent or doesn't have image.
 		DefaultBaseImage string `envconfig:"GITNESS_GITSPACE_DEFAULT_BASE_IMAGE" default:"mcr.microsoft.com/devcontainers/base:dev-ubuntu-24.04"` //nolint:lll
 
+		ExternalURLTemplate string `envconfig:"GITNESS_GITSPACE_EXTERNAL_URL_TEMPLATE"`
+
 		Enable bool `envconfig:"GITNESS_GITSPACE_ENABLE" default:"false"`
 
 		AgentPort int `envconfig:"GITNESS_GITSPACE_AGENT_PORT" default:"8083"`
